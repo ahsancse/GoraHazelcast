@@ -17,7 +17,7 @@
     limitations under the License.
     -->
     <!-- Not yet finished. now working using adding jar to the classpath -->
-    <modelVersion>4.0.0</modelVersion>
+    <modelVersion>1.0.0</modelVersion>
 
     <parent>
         <groupId>org.apache.gora</groupId>

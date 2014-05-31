@@ -38,6 +38,7 @@ public class HazelcastInstanceManager {
             throw new IllegalStateException("HazelcastInstanceManager has already been initialized");
         }
         hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+        
         return hazelcastInstance;
     }
 
@@ -45,6 +46,7 @@ public class HazelcastInstanceManager {
         return hazelcastInstance;
     }
 
-    private HazelcastInstanceManager() {
+    public  HazelcastInstanceManager() {
+    	
     }
 }

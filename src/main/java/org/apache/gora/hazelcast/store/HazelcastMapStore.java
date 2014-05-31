@@ -60,6 +60,7 @@ public class HazelcastMapStore implements DistributedMapStore {
                 ((IMap<K, V>) map).addEntryListener(new EntryListener<K, V>() {
                     public void entryAdded(EntryEvent<K, V> kvEntryEvent) {
                         entryListener.entryAdded(kvEntryEvent.getKey());
+                        
                     }
 
                     public void entryRemoved(EntryEvent<K, V> kvEntryEvent) {
