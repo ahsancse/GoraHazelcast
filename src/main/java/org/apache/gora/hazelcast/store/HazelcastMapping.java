@@ -22,7 +22,7 @@ public class HazelcastMapping {
   String tableName; // The name of the key component that is used for persistence of the specific data bean
   String primaryKey;  // The name of the key component that is used for record identification
   String className; // The name of the class for the databeans
-  String keyClass;  // The type of the key (String in case of Oracle NoSQL)
+  String keyClass;  // The type of the key (String in case of Hazelcast NoSQL)
 
   /**
    * Default constructor that initialises the mapping.
