@@ -109,7 +109,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	
 	private HazelcastMapping readMapping(String mappingFilename) throws IOException {
 
-	    OracleMappingBuilder mappingBuilder = new OracleMapping.OracleMappingBuilder();
+	    HazelcastMappingBuilder mappingBuilder = new HazelcastMapping.HazelcastMappingBuilder();
 
 	    try {
 	      SAXBuilder builder = new SAXBuilder();
