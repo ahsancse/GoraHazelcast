@@ -1,9 +1,13 @@
 package main.java.org.apache.gora.hazelcast.store;
 
 /**
- * @author Apostolos Giannakidis
+ * @author Ahsan Shamsudeen
  */
 public class HazelcastStoreConstants {
+	
+	public HazelcastStoreConstants(){
+		
+	}
 
   /**
    * The mapping file to create the tables from

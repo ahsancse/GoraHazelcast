@@ -16,21 +16,53 @@
 */
 package main.java.org.apache.gora.hazelcast.store;
 
-import java.io.IOException;
-import java.util.LinkedHashSet;
-import java.util.List;
+import main.java.org.apache.gora.hazelcast.store.HazelcastMapping.HazelcastMappingBuilder;
+import main.java.org.apache.gora.hazelcast.utils.Encoder;
+//import main.java.org.apache.gora.hazelcast.utils.BinaryEncoder;
+
+
+
+
+
 
 import org.apache.gora.persistency.impl.PersistentBase;
+import org.apache.gora.store.DataStoreFactory;
+import org.apache.gora.store.impl.DataStoreBase;
+import org.apache.gora.util.AvroUtils;
 import org.apache.gora.query.PartitionQuery;
 import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
-import org.apache.gora.store.impl.DataStoreBase;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.TimeoutException;
+
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.apache.avro.Schema;
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.util.Utf8;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
 
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+import com.hazelcast.core.OperationTimeoutException;
+import com.hazelcast.hibernate.local.Value;
 import com.hazelcast.spi.Operation;
+
 
 public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,T> {
 	
@@ -38,9 +70,10 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	   * Helper to write useful information into the logs
 	   */
 	private static final Logger LOG = LoggerFactory.getLogger(HazelcastStore.class);
+	
 
 	private HazelcastMapping mapping;                                      //the mapping to the datastore
-	  // private Encoder encoder;                                                   // the serialisation encoder
+	private Encoder encoder;                                                   // the serialisation encoder
 	  /*********************************************************************
 	   * Variables and references to Hazelcast NoSQL properties
 	   * and configuration values.
@@ -57,6 +90,9 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	*/
 	LinkedHashSet<List<Operation>> operations;
 	private HazelcastInstance hazelcastInstance;                                  // reference to the Hazelcast datastore
+	//private DistributedMap<K,T> map;
+	private IMap<K, T> map;
+	
 	
 	/**
 	   * Initialize the data store by initialising the operations, setting the datastore
@@ -73,6 +109,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		}
 		
 		operations = new LinkedHashSet();
+		encoder=new main.java.org.apache.gora.hazelcast.utils.BinaryEncoder();
 		readProperties(properties);
 		setupStore();
 		
@@ -82,7 +119,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		}
 		catch ( IOException e ) {
 		      LOG.error( e.getMessage() );
-		      LOG.error( e.getStackTrace().toString() );
+		      LOG.error( e.getStackTrace().toString());
 		}
 
 		if(autoCreateSchema) {
@@ -98,13 +135,14 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		HazelcastInstanceManager hz=new HazelcastInstanceManager();
 		Config cfg = new ClasspathXmlConfig(configurationFile);
 		hazelcastInstance=hz.init(cfg);
+		map=hazelcastInstance.getMap("customer");
 	}
 	
 	private void readProperties(Properties properties) {
 		mappingFile = DataStoreFactory.getMappingFile(properties, this, HazelcastStoreConstants.DEFAULT_MAPPING_FILE);
 		configurationFile=DataStoreFactory.getMappingFile(properties, this, HazelcastStoreConstants.DEFAULT_CONFIGURATION_FILE);
-		storeName = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstant.STORE_NAME, HazelcastStoreConstant.DEFAULT_STORE_NAME);
-		primaryKeyTable = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstant.PRIMARYKEY_TABLE_NAME, HazelcastStoreConstant.DEFAULT_PRIMARYKEY_TABLE_NAME);
+		storeName = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.STORE_NAME, HazelcastStoreConstants.DEFAULT_STORE_NAME);
+		primaryKeyTable = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.PRIMARYKEY_TABLE_NAME, HazelcastStoreConstants.DEFAULT_PRIMARYKEY_TABLE_NAME);
 	}
 	
 	private HazelcastMapping readMapping(String mappingFilename) throws IOException {
@@ -127,8 +165,8 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 
 	      for ( Element classElement : classes ) {
 
-	        if ( classElement.getAttributeValue("keyClass").equals( keyClass.getCanonicalName() )
-	                && classElement.getAttributeValue("name").equals( persistentClass.getCanonicalName() ) ) {
+	        if ( classElement.getAttributeValue("keyClass").equals( keyClass.getCanonicalName())
+	                && classElement.getAttributeValue("name").equals( persistentClass.getCanonicalName())) {
 
 	          String tableName = getSchemaName( classElement.getAttributeValue("table"), persistentClass );
 	          mappingBuilder.setTableName( tableName );
@@ -166,12 +204,128 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	    return mappingBuilder.build();
 	  }
 	
+	/**
+	   * Wrapper method for the extended fromBytes method. It uses the default encoder.
+	   * @param schema  The schema type of the data
+	   * @param data  the data
+	   * @return  the deserialised Object
+	   */
+	  public Object fromBytes(Schema schema, byte data[]) {
+	    return fromBytes(encoder, schema, data);
+	  }
+
+	  /**
+	   * Method for deserialising serialised values.
+	   * @param encoder The encoder to use
+	   * @param schema  The schema type of the data
+	   * @param data  the data
+	   * @return  the deserialised Object
+	   */
+	  public static Object fromBytes(Encoder encoder, Schema schema, byte data[]) {
+	    switch (schema.getType()) {
+	      case BOOLEAN:
+	        return encoder.decodeBoolean(data);
+	      case DOUBLE:
+	        return encoder.decodeDouble(data);
+	      case FLOAT:
+	        return encoder.decodeFloat(data);
+	      case INT:
+	        return encoder.decodeInt(data);
+	      case LONG:
+	        return encoder.decodeLong(data);
+	      case STRING:
+	        return new Utf8(data);
+	      case BYTES:
+	        return ByteBuffer.wrap(data);
+	      case ENUM:
+	        return AvroUtils.getEnumValue(schema, encoder.decodeInt(data));
+	      default:
+			break;
+	    }
+	    throw new IllegalArgumentException("Unknown type " + schema.getType());
+
+	  }
+
+	  /**
+	   * Gets the name of the table that stores the primary keys.
+	   * @return the name of the table that stores the primary keys.
+	   */
+	  public static String getPrimaryKeyTable() {
+	    return primaryKeyTable;
+	  }
+	
 	
 	
 	public void close() {
 	}
+	
+	public boolean schemaExists() {
+		//return hazelcastInstance.get(mapping.getMajorKey())!=null ? true : false;
+		return map.containsKey(mapping.getMajorKey()!=null ? true : false);
+		
+	}
 
 	public void createSchema() {
+		if (schemaExists()){
+		      return;
+		}
+		
+		int tries=0;
+		while (tries<2){
+		      try {
+		    	  
+		        map.put(mapping.getMajorKey(),Value.this);
+		        tries=2;
+		        LOG.debug("Schema: "+mapping.getMajorKey()+" was created successfully");
+		      } catch (OperationTimeoutException ote) {
+		        // The durability guarantee could not be met.
+		        if (tries==1)
+		          LOG.error( ote.getMessage(), ote.getStackTrace().toString() );
+		        else {
+		          LOG.warn("DurabilityException occurred. Retrying one more time after 200 ms.");
+		          try {
+		            Thread.sleep(200);
+		          } catch (InterruptedException e) {
+		            e.printStackTrace();
+		          }
+		          tries++;
+		          continue;
+		        }
+		      } catch (TimeoutException te) {
+		        // The operation was not completed inside of the
+		        // default request timeout limit.
+		        if (tries==1)
+		          LOG.error( te.getMessage(), te.getStackTrace().toString() );
+		        else {
+		          LOG.warn("RequestTimeoutException occurred. Retrying one more time after 200 ms.");
+		          try {
+		            Thread.sleep(200);
+		          } catch (InterruptedException e) {
+		            e.printStackTrace();
+		          }
+		          tries++;
+		          continue;
+		        }
+		      } catch ( Exception e) {
+		        // A generic error occurred
+		        if (tries==1)
+		          LOG.error( e.getMessage(), e.getStackTrace().toString() );
+		        else {
+		          LOG.warn("FaultException occurred. Retrying one more time after 200 ms.");
+		          try {
+		            Thread.sleep(200);
+		          } catch (InterruptedException ie) {
+		            ie.printStackTrace();
+		          }
+		          tries++;
+		          continue;
+		        }
+		      }
+		    }
+		
+		
+		
+		
 		
 	}
 
@@ -212,8 +366,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	}
 
 	public String getSchemaName() {
-		
-		return null;
+		return mapping.getTableName();
 	}
 
 	public Query<K, T> newQuery() {
@@ -226,9 +379,6 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		
 	}
 
-	public boolean schemaExists() {
-		
-		return false;
-	}
+	
 	
 }

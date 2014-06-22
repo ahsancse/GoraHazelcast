@@ -3,23 +3,13 @@ package main.java.org.apache.gora.hazelcast.example;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Map;
-
-
-
-
-
 import com.hazelcast.config.ClasspathXmlConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.HazelcastInstance;
-
-
-
-
-
 import main.java.org.apache.gora.hazelcast.store.HazelcastInstanceManager;
 import main.java.org.apache.gora.hazelcast.store.DistributedMap;
-import main.java.org.apache.gora.hazelcast.store.MapEntryListener;
+
 
 public class TestDistributedMap {
 	public static void main(String[] args) {

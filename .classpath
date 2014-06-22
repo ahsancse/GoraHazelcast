@@ -10,5 +10,7 @@
 	<classpathentry exported="true" kind="lib" path="C:/Users/Ahsan/Downloads/gora-core-0.3.jar/gora-core-0.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/Ahsan/Downloads/slf4j.jar/slf4j.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/Ahsan/Downloads/hadoop-common-0.21.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/Ahsan/Downloads/avro-1.7.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="D:/GSOC 2014/development/jdom-1.1.1.jar/jdom-1.1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

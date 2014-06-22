@@ -4,8 +4,6 @@ package main.java.org.apache.gora.hazelcast.store;
 import org.apache.gora.util.GoraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
 import java.util.*;
 
 /**
@@ -13,12 +11,13 @@ import java.util.*;
  * It holds a definition for a single table.
  * @author Ahsan Shamsudeen
  */
+
 public class HazelcastMapping {
   private static final Logger LOG = LoggerFactory.getLogger(HazelcastMapping.class);
 
   Map<String,String> mapping;
 
-  Key  majorKey;  // Partial major key that serves as a table
+  String  majorKey;  // Partial major key that serves as a table
   String tableName; // The name of the key component that is used for persistence of the specific data bean
   String primaryKey;  // The name of the key component that is used for record identification
   String className; // The name of the class for the databeans
@@ -79,12 +78,12 @@ public class HazelcastMapping {
     List<String> majorKeys = new ArrayList<String>();
     majorKeys.add(this.getTableName());
 
-    Key tableName = Key.createKey(majorKey);
+    String tableName = majorKey;
 
     this.majorKey = tableName;
   }
 
-  public Key getMajorKey() {
+  public String getMajorKey() {
     return majorKey;
   }
 
@@ -172,8 +171,8 @@ public class HazelcastMapping {
     public void addField(String field, String column) {
 
       // verification that column is composed of valid key path
-      Key tmpKey;
-      try{
+      String tmpKey;
+      /*try{
         tmpKey = Key.fromString("/"+column);
       }catch (IllegalArgumentException e){
         LOG.error("Invalid column: key path decoding failed.");
@@ -181,7 +180,7 @@ public class HazelcastMapping {
       }finally {
         tmpKey = null;
       }
-
+*/
       LOG.debug("field: "+field+" was mapped to column:"+column);
       mapping.put(field, column);
     }
