@@ -26,91 +26,90 @@ import org.slf4j.LoggerFactory;
 
 public  class DistributedMap<K, V>  implements Map<K, V>  {
 	
+    private HazelcastInstance hazelcastInstance;                  //reference to the Hazelcast NoSQL datastore
+	private IMap<K, V> map;
 	    
-	    private HazelcastInstance hazelcastInstance;                  //reference to the Hazelcast NoSQL datastore
-	    private IMap<K, V> map;
-	    
-	    public HazelcastInstance getHazelcastInstance(){
-        	return hazelcastInstance;
-        }
+	public HazelcastInstance getHazelcastInstance(){              //return HazelcastInstance
+        return hazelcastInstance;
+    }
         
-        public IMap<K, V> getDistributedMap(){
-        	return map;
-        }
+    public IMap<K, V> getDistributedMap(){
+        return map;
+    }
 
-        public int size() {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                return map.size();
-            }
-            return 0;
+    public int size() {                                               // return size of the map
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            return map.size();
         }
+        return 0;
+    }
 
-        public boolean isEmpty() {
-            if(hazelcastInstance.getLifecycleService().isRunning()){
-                return map.isEmpty();
-            }
-            return true;
+    public boolean isEmpty() {                                          // check whether map is empty
+        if(hazelcastInstance.getLifecycleService().isRunning()){
+            return map.isEmpty();
         }
+        return true;
+    }
 
-        public boolean containsKey(Object key) {
-            return hazelcastInstance.getLifecycleService().isRunning() && map.containsKey(key);
+    public boolean containsKey(Object key) {
+        return hazelcastInstance.getLifecycleService().isRunning() && map.containsKey(key);
+    }
+
+    public boolean containsValue(Object value) {
+        return hazelcastInstance.getLifecycleService().isRunning() && map.containsValue(value);
+    }
+
+    public V get(Object key) {
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            return map.get(key);
         }
+        return null;
+    }
 
-        public boolean containsValue(Object value) {
-            return hazelcastInstance.getLifecycleService().isRunning() && map.containsValue(value);
+    public V put(K key, V value) {
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            return map.put(key, value);
         }
+        return value;
+    }
 
-        public V get(Object key) {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                return map.get(key);
-            }
-            return null;
+    public V remove(Object key) {
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            return map.remove(key);
         }
+        return null;
+    }
 
-        public V put(K key, V value) {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                return map.put(key, value);
-            }
-            return value;
-        }
-
-        public V remove(Object key) {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                return map.remove(key);
-            }
-            return null;
-        }
-
-        public void putAll(Map<? extends K, ? extends V> m) {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                map.putAll(m);
-            }
-        }
-
-        public void clear() {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                map.clear();
-            }
-        }
-
-        public Set<K> keySet() {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                return map.keySet();
-            }
-            return new LinkedHashSet<K>();
-        }
-
-        public Collection<V> values() {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                return map.values();
-            }
-            return new ArrayList<V>();
-        }
-
-        public Set<Entry<K, V>> entrySet() {
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                return map.entrySet();
-            }
-            return new LinkedHashSet<Entry<K, V>>();
+    public void putAll(Map<? extends K, ? extends V> m) {
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            map.putAll(m);
         }
     }
+
+    public void clear() {
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            map.clear();
+        }
+    }
+
+    public Set<K> keySet() {
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            return map.keySet();
+        }
+        return new LinkedHashSet<K>();
+    }
+
+    public Collection<V> values() {
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            return map.values();
+        }
+        return new ArrayList<V>();
+    }
+
+    public Set<Entry<K, V>> entrySet() {
+        if (hazelcastInstance.getLifecycleService().isRunning()) {
+            return map.entrySet();
+        }
+        return new LinkedHashSet<Entry<K, V>>();
+    }
+}

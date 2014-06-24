@@ -19,12 +19,6 @@ package main.java.org.apache.gora.hazelcast.store;
 import main.java.org.apache.gora.hazelcast.store.HazelcastMapping.HazelcastMappingBuilder;
 import main.java.org.apache.gora.hazelcast.utils.Encoder;
 //import main.java.org.apache.gora.hazelcast.utils.BinaryEncoder;
-
-
-
-
-
-
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.store.DataStoreFactory;
 import org.apache.gora.store.impl.DataStoreBase;
@@ -36,6 +30,7 @@ import org.apache.gora.query.Result;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadPendingException;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
@@ -69,7 +64,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	   /**
 	   * Helper to write useful information into the logs
 	   */
-	private static final Logger LOG = LoggerFactory.getLogger(HazelcastStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HazelcastStore.class);
 	
 
 	private HazelcastMapping mapping;                                      //the mapping to the datastore
@@ -101,9 +96,9 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	  
 	@Override
 	public void initialize(Class<K> keyClass, Class<T> persistentClass, Properties properties){
-		super.initialize(keyClass, persistentClass, properties);
+	    super.initialize(keyClass, persistentClass, properties);
 		
-		if ( (mapping != null) && (hazelcastInstance != null) ){
+		if ((mapping != null) && (hazelcastInstance != null)){
 		      LOG.warn("HazelcastStore is already initialised");
 		      return;
 		}
@@ -113,17 +108,17 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		readProperties(properties);
 		setupStore();
 		
-		try {
-		      LOG.debug("mappingFile="+mappingFile);
-		      mapping = readMapping( mappingFile );
+		try{
+		    LOG.debug("mappingFile="+mappingFile);
+		    mapping = readMapping( mappingFile );
 		}
 		catch ( IOException e ) {
-		      LOG.error( e.getMessage() );
-		      LOG.error( e.getStackTrace().toString());
+		    LOG.error( e.getMessage() );
+		    LOG.error( e.getStackTrace().toString());
 		}
 
 		if(autoCreateSchema) {
-		      createSchema();
+		    createSchema();
 		}
 	}
 	
@@ -138,11 +133,12 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		map=hazelcastInstance.getMap("customer");
 	}
 	
-	private void readProperties(Properties properties) {
+	public void readProperties(Properties properties) {
 		mappingFile = DataStoreFactory.getMappingFile(properties, this, HazelcastStoreConstants.DEFAULT_MAPPING_FILE);
 		configurationFile=DataStoreFactory.getMappingFile(properties, this, HazelcastStoreConstants.DEFAULT_CONFIGURATION_FILE);
 		storeName = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.STORE_NAME, HazelcastStoreConstants.DEFAULT_STORE_NAME);
 		primaryKeyTable = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.PRIMARYKEY_TABLE_NAME, HazelcastStoreConstants.DEFAULT_PRIMARYKEY_TABLE_NAME);
+		System.out.println(mappingFile);
 	}
 	
 	private HazelcastMapping readMapping(String mappingFilename) throws IOException {
@@ -169,7 +165,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	                && classElement.getAttributeValue("name").equals( persistentClass.getCanonicalName())) {
 
 	          String tableName = getSchemaName( classElement.getAttributeValue("table"), persistentClass );
-	          mappingBuilder.setTableName( tableName );
+	          mappingBuilder.setTableName(tableName);
 
 	          mappingBuilder.setClassName( classElement.getAttributeValue("name") );
 	          mappingBuilder.setKeyClass( classElement.getAttributeValue("keyClass") );
@@ -274,7 +270,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		while (tries<2){
 		      try {
 		    	  
-		        map.put(mapping.getMajorKey(),Value.this);
+		        map.put(mapping.getMajorKey(),null);
 		        tries=2;
 		        LOG.debug("Schema: "+mapping.getMajorKey()+" was created successfully");
 		      } catch (OperationTimeoutException ote) {
@@ -378,6 +374,8 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		
 		
 	}
+	
+	
 
 	
 	
