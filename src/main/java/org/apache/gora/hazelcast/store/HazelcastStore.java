@@ -21,6 +21,7 @@ import main.java.org.apache.gora.hazelcast.utils.Encoder;
 
 
 
+
 //import main.java.org.apache.gora.hazelcast.utils.BinaryEncoder;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.store.DataStoreFactory;
@@ -61,6 +62,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.OperationTimeoutException;
 import com.hazelcast.hibernate.local.Value;
+import com.hazelcast.map.operation.RemoveOperation;
 import com.hazelcast.multimap.operations.ValuesOperation;
 import com.hazelcast.spi.Operation;
 
@@ -387,10 +389,13 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		}
 		try {
 			
+			map.remove(mapping.getMajorKey());
+			LOG.debug("Schema: "+mapping.getMajorKey()+" was deleted successfully");
+			
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		map.remove(mapping.getMajorKey());
+		
 		
 		
 	}
