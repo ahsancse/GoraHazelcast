@@ -18,6 +18,8 @@ package main.java.org.apache.gora.hazelcast.store;
 
 import main.java.org.apache.gora.hazelcast.store.HazelcastMapping.HazelcastMappingBuilder;
 import main.java.org.apache.gora.hazelcast.utils.Encoder;
+
+
 //import main.java.org.apache.gora.hazelcast.utils.BinaryEncoder;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.store.DataStoreFactory;
@@ -26,6 +28,7 @@ import org.apache.gora.util.AvroUtils;
 import org.apache.gora.query.PartitionQuery;
 import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
+import org.apache.hadoop.http.HttpServer.QuotingInputFilter.RequestQuoter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,6 +59,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.OperationTimeoutException;
 import com.hazelcast.hibernate.local.Value;
+import com.hazelcast.multimap.operations.ValuesOperation;
 import com.hazelcast.spi.Operation;
 
 
@@ -85,8 +89,8 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	*/
 	LinkedHashSet<List<Operation>> operations;
 	private HazelcastInstance hazelcastInstance;                                  // reference to the Hazelcast datastore
-	//private DistributedMap<K,T> map;
-	private IMap<K, T> map;
+    //private DistributedMap<K,T> map;
+	private IMap<String,String> map;
 	
 	
 	/**
@@ -130,7 +134,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		HazelcastInstanceManager hz=new HazelcastInstanceManager();
 		Config cfg = new ClasspathXmlConfig(configurationFile);
 		hazelcastInstance=hz.init(cfg);
-		map=hazelcastInstance.getMap("customer");
+		map=hazelcastInstance.getMap(storeName);
 	}
 	
 	public void readProperties(Properties properties) {
@@ -241,6 +245,86 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	    throw new IllegalArgumentException("Unknown type " + schema.getType());
 
 	  }
+	  
+	  public K fromBytes(Class<K> clazz, byte[] val) {
+		    return fromBytes(encoder, clazz, val);
+      }
+	  
+	  @SuppressWarnings("unchecked")
+      public static <K> K fromBytes(Encoder encoder, Class<K> clazz, byte[] val) {
+	      try{
+		      if (clazz.equals(Byte.TYPE) || clazz.equals(Byte.class)) {
+		          return (K) Byte.valueOf(encoder.decodeByte(val));
+		      }else if (clazz.equals(Boolean.TYPE) || clazz.equals(Boolean.class)) {
+		          return (K) Boolean.valueOf(encoder.decodeBoolean(val));
+		      } else if (clazz.equals(Short.TYPE) || clazz.equals(Short.class)) {
+		          return (K) Short.valueOf(encoder.decodeShort(val));
+		      } else if (clazz.equals(Integer.TYPE) || clazz.equals(Integer.class)) {
+		          return (K) Integer.valueOf(encoder.decodeInt(val));
+		      } else if (clazz.equals(Long.TYPE) || clazz.equals(Long.class)) {
+		          return (K) Long.valueOf(encoder.decodeLong(val));
+		      } else if (clazz.equals(Float.TYPE) || clazz.equals(Float.class)) {
+		          return (K) Float.valueOf(encoder.decodeFloat(val));
+		      } else if (clazz.equals(Double.TYPE) || clazz.equals(Double.class)) {
+		          return (K) Double.valueOf(encoder.decodeDouble(val));
+		      } else if (clazz.equals(String.class)) {
+		          return (K) new String(val, "UTF-8");
+		      } else if (clazz.equals(Utf8.class)) {
+		          return (K) new Utf8(val);
+		      }
+		      
+		      throw new IllegalArgumentException("Unknown type " + clazz.getName());
+		      } catch (IOException ioe) {
+		          throw new RuntimeException(ioe);
+		    }
+      }
+	  
+	  private static byte[] copyIfNeeded(byte b[], int offset, int len) {
+		    if (len != b.length || offset != 0) {
+		      byte copy[] = new byte[len];
+		      System.arraycopy(b, offset, copy, 0, copy.length);
+		      b = copy;
+		    }
+		    return b;
+	  }
+	  
+	  public byte[] toBytes(Object o) {
+		    return toBytes(encoder, o);
+	  }
+	  
+	  public static byte[] toBytes(Encoder encoder, Object o) {
+		    
+		    try {
+		      if (o instanceof String) {
+		        return ((String) o).getBytes("UTF-8");
+		      } else if (o instanceof Utf8) {
+		        return copyIfNeeded(((Utf8) o).getBytes(), 0, ((Utf8) o).getLength());
+		      } else if (o instanceof ByteBuffer) {
+		        return copyIfNeeded(((ByteBuffer) o).array(), ((ByteBuffer) o).arrayOffset() + ((ByteBuffer) o).position(), ((ByteBuffer) o).remaining());
+		      } else if (o instanceof Long) {
+		        return encoder.encodeLong((Long) o);
+		      } else if (o instanceof Integer) {
+		        return encoder.encodeInt((Integer) o);
+		      } else if (o instanceof Short) {
+		        return encoder.encodeShort((Short) o);
+		      } else if (o instanceof Byte) {
+		        return encoder.encodeByte((Byte) o);
+		      } else if (o instanceof Boolean) {
+		        return encoder.encodeBoolean((Boolean) o);
+		      } else if (o instanceof Float) {
+		        return encoder.encodeFloat((Float) o);
+		      } else if (o instanceof Double) {
+		        return encoder.encodeDouble((Double) o);
+		      } else if (o instanceof Enum) {
+		        return encoder.encodeInt(((Enum) o).ordinal());
+		      }
+		    } catch (IOException ioe) {
+		      throw new RuntimeException(ioe);
+		    }
+		    
+		    throw new IllegalArgumentException("Uknown type " + o.getClass().getName());
+		  }
+	  
 
 	  /**
 	   * Gets the name of the table that stores the primary keys.
@@ -266,64 +350,13 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		      return;
 		}
 		
-		int tries=0;
-		while (tries<2){
-		      try {
-		    	  
-		        map.put(mapping.getMajorKey(),null);
-		        tries=2;
-		        LOG.debug("Schema: "+mapping.getMajorKey()+" was created successfully");
-		      } catch (OperationTimeoutException ote) {
-		        // The durability guarantee could not be met.
-		        if (tries==1)
-		          LOG.error( ote.getMessage(), ote.getStackTrace().toString() );
-		        else {
-		          LOG.warn("DurabilityException occurred. Retrying one more time after 200 ms.");
-		          try {
-		            Thread.sleep(200);
-		          } catch (InterruptedException e) {
-		            e.printStackTrace();
-		          }
-		          tries++;
-		          continue;
-		        }
-		      } catch (TimeoutException te) {
-		        // The operation was not completed inside of the
-		        // default request timeout limit.
-		        if (tries==1)
-		          LOG.error( te.getMessage(), te.getStackTrace().toString() );
-		        else {
-		          LOG.warn("RequestTimeoutException occurred. Retrying one more time after 200 ms.");
-		          try {
-		            Thread.sleep(200);
-		          } catch (InterruptedException e) {
-		            e.printStackTrace();
-		          }
-		          tries++;
-		          continue;
-		        }
-		      } catch ( Exception e) {
-		        // A generic error occurred
-		        if (tries==1)
-		          LOG.error( e.getMessage(), e.getStackTrace().toString() );
-		        else {
-		          LOG.warn("FaultException occurred. Retrying one more time after 200 ms.");
-		          try {
-		            Thread.sleep(200);
-		          } catch (InterruptedException ie) {
-		            ie.printStackTrace();
-		          }
-		          tries++;
-		          continue;
-		        }
-		      }
-		    }
-		
-		
-		
-		
-		
-	}
+		try {
+			map.put(mapping.getMajorKey(),getSchemaName());
+			LOG.debug("Schema: "+mapping.getMajorKey()+" was created successfully");
+		} catch (Exception e) {
+			LOG.error( e.getMessage(), e.getStackTrace().toString() );
+		}
+    }
 
 	public boolean delete(K arg0) {
 		
@@ -336,6 +369,15 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	}
 
 	public void deleteSchema() {
+		if (!schemaExists()){
+		      return;
+		}
+		try {
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		map.remove(mapping.getMajorKey());
 		
 		
 	}
