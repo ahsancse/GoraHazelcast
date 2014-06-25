@@ -100,30 +100,36 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	  
 	@Override
 	public void initialize(Class<K> keyClass, Class<T> persistentClass, Properties properties){
-	    super.initialize(keyClass, persistentClass, properties);
-		
-		if ((mapping != null) && (hazelcastInstance != null)){
-		      LOG.warn("HazelcastStore is already initialised");
-		      return;
-		}
-		
-		operations = new LinkedHashSet();
-		encoder=new main.java.org.apache.gora.hazelcast.utils.BinaryEncoder();
-		readProperties(properties);
-		setupStore();
-		
-		try{
-		    LOG.debug("mappingFile="+mappingFile);
-		    mapping = readMapping( mappingFile );
-		}
-		catch ( IOException e ) {
-		    LOG.error( e.getMessage() );
-		    LOG.error( e.getStackTrace().toString());
-		}
+	    try {
+	    	super.initialize(keyClass, persistentClass, properties);
+			
+			if ((mapping != null) && (hazelcastInstance != null)){
+			      LOG.warn("HazelcastStore is already initialised");
+			      return;
+			}
+			
+			operations = new LinkedHashSet();
+			encoder=new main.java.org.apache.gora.hazelcast.utils.BinaryEncoder();
+			readProperties(properties);
+			setupStore();
+			
+			try{
+			    LOG.debug("mappingFile="+mappingFile);
+			    mapping = readMapping( mappingFile );
+			}
+			catch ( IOException e ) {
+			    LOG.error( e.getMessage() );
+			    LOG.error( e.getStackTrace().toString());
+			}
 
-		if(autoCreateSchema) {
-		    createSchema();
+			if(autoCreateSchema) {
+			    createSchema();
+			}
+			
+		} catch (Exception e) {
+			LOG.error(e.getMessage(), e);
 		}
+		
 	}
 	
 	/**
@@ -138,11 +144,16 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	}
 	
 	public void readProperties(Properties properties) {
-		mappingFile = DataStoreFactory.getMappingFile(properties, this, HazelcastStoreConstants.DEFAULT_MAPPING_FILE);
-		configurationFile=DataStoreFactory.getMappingFile(properties, this, HazelcastStoreConstants.DEFAULT_CONFIGURATION_FILE);
-		storeName = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.STORE_NAME, HazelcastStoreConstants.DEFAULT_STORE_NAME);
-		primaryKeyTable = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.PRIMARYKEY_TABLE_NAME, HazelcastStoreConstants.DEFAULT_PRIMARYKEY_TABLE_NAME);
-		System.out.println(mappingFile);
+		try {
+			mappingFile = DataStoreFactory.getMappingFile(properties, this, HazelcastStoreConstants.DEFAULT_MAPPING_FILE);
+			configurationFile=DataStoreFactory.getMappingFile(properties, this, HazelcastStoreConstants.DEFAULT_CONFIGURATION_FILE);
+			storeName = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.STORE_NAME, HazelcastStoreConstants.DEFAULT_STORE_NAME);
+			primaryKeyTable = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.PRIMARYKEY_TABLE_NAME, HazelcastStoreConstants.DEFAULT_PRIMARYKEY_TABLE_NAME);
+			System.out.println(mappingFile);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
 	}
 	
 	private HazelcastMapping readMapping(String mappingFilename) throws IOException {
@@ -316,7 +327,7 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 		      } else if (o instanceof Double) {
 		        return encoder.encodeDouble((Double) o);
 		      } else if (o instanceof Enum) {
-		        return encoder.encodeInt(((Enum) o).ordinal());
+		        return encoder.encodeInt(((Enum<?>) o).ordinal());
 		      }
 		    } catch (IOException ioe) {
 		      throw new RuntimeException(ioe);
