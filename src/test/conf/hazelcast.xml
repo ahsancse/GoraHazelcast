@@ -105,7 +105,7 @@
 
         <empty-queue-ttl>-1</empty-queue-ttl>
     </queue>
-    <map name="customer">
+    <map name="hazelcaststore">
         <!--
            Data type that will be used for storing recordMap.
            Possible values:

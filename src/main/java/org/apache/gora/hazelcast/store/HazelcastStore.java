@@ -20,6 +20,7 @@ import main.java.org.apache.gora.hazelcast.store.HazelcastMapping.HazelcastMappi
 import main.java.org.apache.gora.hazelcast.utils.Encoder;
 
 
+
 //import main.java.org.apache.gora.hazelcast.utils.BinaryEncoder;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.store.DataStoreFactory;
@@ -30,6 +31,7 @@ import org.apache.gora.query.Query;
 import org.apache.gora.query.Result;
 import org.apache.hadoop.http.HttpServer.QuotingInputFilter.RequestQuoter;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -150,8 +152,8 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 			storeName = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.STORE_NAME, HazelcastStoreConstants.DEFAULT_STORE_NAME);
 			primaryKeyTable = DataStoreFactory.findProperty(properties, this, HazelcastStoreConstants.PRIMARYKEY_TABLE_NAME, HazelcastStoreConstants.DEFAULT_PRIMARYKEY_TABLE_NAME);
 			System.out.println(mappingFile);
-		} catch (Exception e) {
-			// TODO: handle exception
+		}catch (Exception e) {
+			LOG.error(e.getMessage(), e);  
 		}
 		
 	}

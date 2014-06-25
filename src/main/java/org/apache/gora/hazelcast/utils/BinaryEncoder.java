@@ -182,10 +182,10 @@ public class BinaryEncoder implements Encoder {
     }
 
     public byte[] lastPossibleKey(int size, byte[] er) {
-        return Utils.lastPossibleKey(size, er);
+        return Utilitys.lastPossibleKey(size, er);
     }
 
     public byte[] followingKey(int size, byte[] per) {
-        return Utils.followingKey(size, per);
+        return Utilitys.followingKey(size, per);
     }
 }
