@@ -18,10 +18,6 @@ package main.java.org.apache.gora.hazelcast.store;
 
 import main.java.org.apache.gora.hazelcast.store.HazelcastMapping.HazelcastMappingBuilder;
 import main.java.org.apache.gora.hazelcast.utils.Encoder;
-
-
-
-
 //import main.java.org.apache.gora.hazelcast.utils.BinaryEncoder;
 import org.apache.gora.persistency.impl.PersistentBase;
 import org.apache.gora.store.DataStoreFactory;

@@ -16,9 +16,11 @@
 */
 
 package main.java.org.apache.gora.hazelcast.utils;
+/*
+ * common encoder interface 
+ */
 
-
-public interface Encoder {
+public interface Encoder {                                                         
 
   public byte[] encodeByte(byte b, byte[] ret);
 

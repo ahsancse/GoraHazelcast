@@ -26,10 +26,14 @@ import org.slf4j.LoggerFactory;
 
 public  class DistributedMap<K, V>  implements Map<K, V>  {
 	
-    private HazelcastInstance hazelcastInstance;                  //reference to the Hazelcast NoSQL datastore
+	private HazelcastInstance hazelcastInstance;                  //reference to the Hazelcast NoSQL datastore
 	private IMap<K, V> map;
-	    
-	public HazelcastInstance getHazelcastInstance(){              //return HazelcastInstance
+	
+	public DistributedMap(HazelcastInstance instance) {
+		this.hazelcastInstance=instance;
+	}
+	
+    public HazelcastInstance getHazelcastInstance(){              //return HazelcastInstance
         return hazelcastInstance;
     }
         
