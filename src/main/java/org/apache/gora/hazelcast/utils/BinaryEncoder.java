@@ -26,8 +26,11 @@ public class BinaryEncoder implements Encoder {
     public byte[] encodeShort(short s) {
         return encodeShort(s, new byte[2]);
     }
-
-    public byte[] encodeShort(short s, byte ret[]) {                                  // encode Short values into byte
+    
+     /** 
+     * encode Short values into byte
+     */
+    public byte[] encodeShort(short s, byte ret[]) {                                  
         try{
             DataOutputStream dos = new DataOutputStream(new FixedByteArrayOutputStream(ret));
             dos.writeShort(s);
@@ -37,7 +40,10 @@ public class BinaryEncoder implements Encoder {
         }
     }
 
-    public short decodeShort(byte[] a) {                                            // decode byte into short
+    /** 
+     * decode byte into short
+     */
+    public short decodeShort(byte[] a) {                                            
         try {
             DataInputStream dis = new DataInputStream(new ByteArrayInputStream(a));
             short s = dis.readShort();
@@ -47,7 +53,10 @@ public class BinaryEncoder implements Encoder {
         }
     }
 
-    public byte[] encodeInt(int i) {                                             // encode int values into byte
+    /** 
+     * encode int values into byte
+     */
+    public byte[] encodeInt(int i) {                                             
         return encodeInt(i, new byte[4]);
     }
 
@@ -61,7 +70,10 @@ public class BinaryEncoder implements Encoder {
         }
     }
 
-    public int decodeInt(byte[] a) {                                              // decode byte into int
+    /** 
+     * decode byte into int
+     */
+    public int decodeInt(byte[] a) {                                              
         try {
             DataInputStream dis = new DataInputStream(new ByteArrayInputStream(a));
             int i = dis.readInt();
@@ -71,7 +83,10 @@ public class BinaryEncoder implements Encoder {
         }
     }
 
-    public byte[] encodeLong(long l) {                                           // encode long values into byte
+    /** 
+     * encode long values into byte
+     */
+    public byte[] encodeLong(long l) {                                           
         return encodeLong(l, new byte[8]);
     }
 
@@ -85,7 +100,10 @@ public class BinaryEncoder implements Encoder {
         }
     }
 
-    public long decodeLong(byte[] a) {                                                  // decode byte into long
+    /** 
+     * decode byte into long
+     */
+    public long decodeLong(byte[] a) {                                                  
         try {
             DataInputStream dis = new DataInputStream(new ByteArrayInputStream(a));
             long l = dis.readLong();
@@ -94,8 +112,11 @@ public class BinaryEncoder implements Encoder {
             throw new RuntimeException(ioe);
         }
     }
-
-    public byte[] encodeDouble(double d) {                                          // encode double values into byte
+    
+    /** 
+     * encode double values into byte
+     */
+    public byte[] encodeDouble(double d) {                                          
         return encodeDouble(d, new byte[8]);
     }
 
@@ -109,8 +130,12 @@ public class BinaryEncoder implements Encoder {
             throw new RuntimeException(ioe);
         }
     }
-
-    public double decodeDouble(byte[] a) {                                        // decode byte into double
+    
+    /** 
+     * decode byte into double
+     */
+    
+    public double decodeDouble(byte[] a) {                                        
         try {
             DataInputStream dis = new DataInputStream(new ByteArrayInputStream(a));
             long l = dis.readLong();
@@ -119,8 +144,11 @@ public class BinaryEncoder implements Encoder {
             throw new RuntimeException(ioe);
         }
     }
-
-    public byte[] encodeFloat(float d) {                                            // encode float values into byte
+    
+    /** 
+     * encode float values into byte
+     */
+    public byte[] encodeFloat(float d) {                                            
         return encodeFloat(d, new byte[4]);
     }
 
@@ -134,8 +162,12 @@ public class BinaryEncoder implements Encoder {
             throw new RuntimeException(ioe);
         }
     }
+    
+    /** 
+     * decode byte into float
+     */
 
-    public float decodeFloat(byte[] a) {                                             // decode byte into float
+    public float decodeFloat(byte[] a) {                                             
         try {
             DataInputStream dis = new DataInputStream(new ByteArrayInputStream(a));
             int i = dis.readInt();
@@ -158,7 +190,10 @@ public class BinaryEncoder implements Encoder {
         return a[0];
     }
 
-    public boolean decodeBoolean(byte[] a) {                                            // decode byte into boolean
+    /** 
+     * decode byte into boolean
+     */
+    public boolean decodeBoolean(byte[] a) {                                            
         try {
             DataInputStream dis = new DataInputStream(new ByteArrayInputStream(a));
             return dis.readBoolean();
@@ -166,8 +201,12 @@ public class BinaryEncoder implements Encoder {
             throw new RuntimeException(ioe);
         }
     }
+    
+    /** 
+     * encode boolean values into byte
+     */
 
-    public byte[] encodeBoolean(boolean b) {                                                   // encode boolean values into byte
+    public byte[] encodeBoolean(boolean b) {                                                   
         return encodeBoolean(b, new byte[1]);
     }
 
