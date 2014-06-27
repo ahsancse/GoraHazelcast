@@ -70,17 +70,19 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
 	   */
     private static final Logger LOG = LoggerFactory.getLogger(HazelcastStore.class);
 	
-
-	private HazelcastMapping mapping;                                      //the mapping to the datastore
-	private Encoder encoder;                                                   // the serialisation encoder
+    /**
+     * mapping to the datastore and  serialisation encoder
+     */
+	private HazelcastMapping mapping;                                      
+	private Encoder encoder;                                                   
 	  /*********************************************************************
 	   * Variables and references to Hazelcast NoSQL properties
 	   * and configuration values.
 	   *********************************************************************/
-	private static String storeName;                                               //the name of the Hazelcast key-value store
-	private static String mappingFile;                                             //the filename of the mapping (xml) file
+	private static String storeName;                                               
+	private static String mappingFile;                                             
 	private static String configurationFile;
-	private static String primaryKeyTable;                                         //the name of the table that stores the primary keys
+	private static String primaryKeyTable;                                         
 	
 	/**
     Set of operations to be executed during flush().
@@ -88,7 +90,10 @@ public class HazelcastStore<K,T extends PersistentBase> extends DataStoreBase<K,
     each operation was added to the collection.
 	*/
 	LinkedHashSet<List<Operation>> operations;
-	private HazelcastInstance hazelcastInstance;                                  // reference to the Hazelcast datastore
+	/*
+	 * reference to the Hazelcast datastore
+	 */
+	private HazelcastInstance hazelcastInstance;                                  
     //private DistributedMap<K,T> map;
 	private IMap<String,String> map;
 	
